@@ -1,0 +1,32 @@
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import type { ReactNode } from 'react';
+
+interface ProtectedRouteProps {
+  children: ReactNode;
+}
+
+function ProtectedRoute({ children }: ProtectedRouteProps) {
+  const { user, loading, isDemoMode } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4">
+          <div
+            className="w-10 h-10 rounded-full border-3 border-navy/20 border-t-navy animate-spin"
+          />
+          <p className="text-text-secondary font-medium">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user && !isDemoMode) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+}
+
+export default ProtectedRoute;
