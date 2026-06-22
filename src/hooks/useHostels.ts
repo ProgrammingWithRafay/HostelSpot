@@ -20,7 +20,19 @@ const DEFAULT_FILTERS: HostelFilters = {
 
 const ITEMS_PER_PAGE = 6;
 
+/**
+ * Custom hook for fetching, filtering, sorting, and paginating hostel data.
+ * 
+ * Architecture Note: 
+ * Instead of making a new Supabase query every time a filter changes (which is slow and costs API calls),
+ * we fetch all hostels ONCE on mount. We then apply all filters, sorts, and pagination 
+ * purely on the client-side using `useMemo`. This results in instant, 0-latency UI updates when users tweak filters.
+ * 
+ * @param {Partial<HostelFilters>} filters - Object containing active search criteria from the UI/URL
+ * @returns Object containing paginated hostels, total pages, and loading/error states
+ */
 export function useHostels(filters: Partial<HostelFilters> = {}) {
+  // Master state containing ALL hostels fetched from the database
   const [allHostels, setAllHostels] = useState<Hostel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,7 +74,8 @@ export function useHostels(filters: Partial<HostelFilters> = {}) {
     fetchHostels();
   }, [fetchHostels]);
 
-  // Apply filters instantly on the client side
+  // Apply filters instantly on the client side whenever `allHostels` or `activeFilters` change.
+  // We use useMemo to cache the result so we don't re-calculate on unrelated renders.
   const filteredHostels = useMemo(() => {
     let result = [...allHostels];
 
@@ -159,6 +172,8 @@ export function useHostels(filters: Partial<HostelFilters> = {}) {
     return result;
   }, [allHostels, activeFilters]);
 
+  // Calculate final pagination metadata
+  // We slice the fully filtered & sorted array to grab just the current page's chunk of data
   const paginatedHostels = useMemo(() => {
     const page = activeFilters.page || 1;
     const startIndex = (page - 1) * ITEMS_PER_PAGE;
