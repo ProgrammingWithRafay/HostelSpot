@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, MapPin, Building2, ArrowRight, CheckCircle2, ChevronRight } from "lucide-react";
 import { motion } from "motion/react";
@@ -12,21 +12,21 @@ import { UNIVERSITIES_BY_CITY } from "../utils/constants";
 
 const HOW_IT_WORKS = [
   {
-    step: "01",
-    title: "Search Your City",
-    desc: "Enter your city and university. Browse hundreds of verified hostels with detailed photos, amenities, and pricing.",
+    step: "1",
+    title: "Pick your city",
+    desc: "Tell us where you're studying. We'll show you hostels that have been checked by our team, complete with real photos and prices.",
     icon: Search,
   },
   {
-    step: "02",
-    title: "Compare & Book",
-    desc: "Filter by price, room type, and amenities. Read student reviews and submit a booking request directly online.",
+    step: "2",
+    title: "Pick a place",
+    desc: "Look at what fits your budget and read what other students think about it. Then, just request a booking online.",
     icon: Building2,
   },
   {
-    step: "03",
-    title: "Move Right In",
-    desc: "Get a booking confirmation, coordinate your move-in date with the owner, and settle into your new home.",
+    step: "3",
+    title: "Move in",
+    desc: "Once the owner confirms, you just pack your bags and move in when the semester starts.",
     icon: CheckCircle2,
   },
 ];
@@ -35,34 +35,55 @@ const FALLBACK_TESTIMONIALS: any[] = [];
 
 function AnimatedNumber({ value }: { value: number }) {
   const [current, setCurrent] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     if (value === 0) return;
-    const duration = 1500;
-    const steps = 60;
-    const stepTime = Math.max(16, Math.floor(duration / steps));
-    let currentStep = 0;
+    
+    const node = ref.current;
+    if (!node) return;
 
-    const timer = setInterval(() => {
-      currentStep++;
-      setCurrent(Math.floor((value / steps) * currentStep));
-      if (currentStep >= steps) {
-        setCurrent(value);
-        clearInterval(timer);
-      }
-    }, stepTime);
+    let hasRun = false;
+    let timer: ReturnType<typeof setInterval>;
 
-    return () => clearInterval(timer);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !hasRun) {
+          hasRun = true;
+          const duration = 1500;
+          const steps = 60;
+          const stepTime = Math.max(16, Math.floor(duration / steps));
+          let currentStep = 0;
+
+          timer = setInterval(() => {
+            currentStep++;
+            setCurrent(Math.floor((value / steps) * currentStep));
+            if (currentStep >= steps) {
+              setCurrent(value);
+              clearInterval(timer);
+            }
+          }, stepTime);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(node);
+
+    return () => {
+      observer.disconnect();
+      if (timer) clearInterval(timer);
+    };
   }, [value]);
 
-  return <>{current}</>;
+  return <span ref={ref}>{current}</span>;
 }
 
 function HeroText() {
   const [text1, setText1] = useState("");
   const [text2, setText2] = useState("");
-  const full1 = "Find Your Perfect";
-  const full2 = "Student Home";
+  const full1 = "Find a good";
+  const full2 = "student hostel";
 
   useEffect(() => {
     let i = 0;
@@ -178,22 +199,21 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       {/* ── Hero ── */}
-      <section className="relative overflow-hidden bg-primary/5 text-foreground">
+      <section className="relative overflow-hidden bg-slate-50 text-slate-900 border-b border-border">
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 py-24 sm:py-32 text-center z-10">
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+          <div>
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary mb-6">
-              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
               {stats.hostels > 0 ? (
-                <><AnimatedNumber value={stats.hostels} /> Verified Hostels Across Pakistan</>
+                <><AnimatedNumber value={stats.hostels} /> Checked Hostels Across Pakistan</>
               ) : (
-                "Verified Hostels Across Pakistan"
+                "Checked Hostels Across Pakistan"
               )}
             </span>
             
             <HeroText />
             
             <p className="text-muted-foreground text-lg max-w-xl mx-auto mb-10">
-              Discover verified, affordable hostels near your university. Real photos, real reviews, zero hassle.
+              We help you find safe, clean, and affordable hostels near your university without the usual stress.
             </p>
 
             {/* Search bar */}
@@ -232,24 +252,17 @@ export default function Home() {
                 </Button>
               </div>
             </form>
-          </motion.div>
-        </div>
-        
-        {/* Sleek abstract background shapes instead of photo */}
-        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-40">
-          <div className="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 bg-primary/10 blur-[120px] rounded-full" />
-          <div className="absolute top-1/4 -right-1/4 w-1/2 h-1/2 bg-secondary/30 blur-[100px] rounded-full" />
-          <div className="absolute -bottom-1/4 left-1/3 w-1/2 h-1/2 bg-primary/10 blur-[120px] rounded-full" />
+          </div>
         </div>
       </section>
 
       {/* ── Stats ── */}
-      <section className="bg-card border-b border-border text-foreground py-10">
+      <section className="bg-card border-b border-border text-foreground py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 flex flex-wrap justify-center gap-12 sm:gap-24 text-center">
           {[
-            { value: stats.hostels, label: "Verified Hostels" },
-            { value: stats.universities, label: "Universities Covered" },
-            { value: stats.reviews, label: "Student Reviews" },
+            { value: stats.hostels, label: "Checked Hostels" },
+            { value: stats.universities, label: "Campuses nearby" },
+            { value: stats.reviews, label: "Real student reviews" },
           ]
             .map((s) => (
             <div key={s.label}>
@@ -263,11 +276,17 @@ export default function Home() {
       </section>
 
       {/* ── Featured Hostels ── */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-20">
+      <motion.section 
+        initial={{ opacity: 0, y: 30 }} 
+        whileInView={{ opacity: 1, y: 0 }} 
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.6 }}
+        className="max-w-6xl mx-auto px-4 sm:px-6 py-24"
+      >
         <div className="flex items-end justify-between mb-10">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-2">Top Picks</p>
-            <h2 className="text-3xl font-bold">Featured Hostels</h2>
+            <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-2">Popular choices</p>
+            <h2 className="text-3xl font-bold">Hostels people like</h2>
           </div>
           <button onClick={() => navigate("/hostels")} className="text-sm font-semibold text-primary hover:underline flex items-center gap-1 cursor-pointer">
             View All <ArrowRight size={15} />
@@ -282,27 +301,43 @@ export default function Home() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredHostels.map((h) => <HostelCard key={h.id} hostel={h} />)}
+            {featuredHostels.map((h, i) => (
+              <motion.div
+                key={h.id}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.5, delay: i * 0.15 }}
+              >
+                <HostelCard hostel={h} />
+              </motion.div>
+            ))}
           </div>
         )}
-      </section>
+      </motion.section>
 
       {/* ── How it Works ── */}
-      <section className="bg-secondary/50 py-20">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+      <section className="bg-slate-50 py-24 border-t border-border overflow-hidden">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }} 
+          whileInView={{ opacity: 1, y: 0 }} 
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="max-w-5xl mx-auto px-4 sm:px-6"
+        >
           <div className="text-center mb-12">
-            <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-2">Simple Process</p>
-            <h2 className="text-3xl font-bold">How HostelSpot Works</h2>
+            <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-2">How to use it</p>
+            <h2 className="text-3xl font-bold">How to book a hostel</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
             <div className="hidden md:block absolute top-8 left-1/4 right-1/4 h-0.5 bg-border" />
-            {HOW_IT_WORKS.map(({ step, title, desc, icon: Icon }) => (
+            {HOW_IT_WORKS.map(({ step, title, desc, icon: Icon }, i) => (
               <motion.div
                 key={step}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.5, delay: i * 0.15 }}
                 className="relative bg-card rounded-2xl p-6 border border-border text-center shadow-sm"
               >
                 <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
@@ -314,15 +349,15 @@ export default function Home() {
               </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* ── Testimonials ── */}
       {reviews.length > 0 && (
-        <section className="max-w-5xl mx-auto px-4 sm:px-6 py-20">
+        <section className="max-w-5xl mx-auto px-4 sm:px-6 py-24">
         <div className="text-center mb-12">
-          <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-2">Student Stories</p>
-          <h2 className="text-3xl font-bold">What Students Say</h2>
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-2">What people say</p>
+          <h2 className="text-3xl font-bold">Reviews from students</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {reviews.map((t, i) => (
@@ -346,15 +381,21 @@ export default function Home() {
       )}
 
       {/* ── Owner CTA ── */}
-      <section className="bg-primary/5 border-y border-border text-foreground py-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-8">
+      <section className="bg-slate-50 border-y border-border text-slate-900 py-24 overflow-hidden">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }} 
+          whileInView={{ opacity: 1, y: 0 }} 
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="max-w-4xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-8"
+        >
           <div>
-            <h2 className="text-3xl font-bold mb-3">Own a Hostel?</h2>
+            <h2 className="text-3xl font-bold mb-3">Do you run a hostel?</h2>
             <p className="text-muted-foreground max-w-md">
-              List your property on HostelSpot and reach thousands of students searching for accommodation every month. Free listing, instant visibility.
+              Put your hostel on our site to easily find students looking for a place to stay. It doesn't cost anything to join.
             </p>
             <ul className="mt-4 space-y-1.5">
-              {["Free to list", "Verified badge for your property", "Manage bookings online", "Reach students across your city"].map((item) => (
+              {["No setup fees", "We check your place", "Handle bookings easily", "Find students fast"].map((item) => (
                 <li key={item} className="flex items-center gap-2 text-sm text-muted-foreground">
                   <CheckCircle2 size={14} className="text-primary shrink-0" /> {item}
                 </li>
@@ -366,10 +407,10 @@ export default function Home() {
               onClick={() => navigate("/register")}
               className="flex items-center gap-2 bg-primary text-primary-foreground font-bold px-8 py-3.5 rounded-2xl hover:bg-primary/90 transition-colors shadow-lg cursor-pointer"
             >
-              List Your Property <ChevronRight size={18} />
+              Add your hostel <ChevronRight size={18} />
             </button>
           </div>
-        </div>
+        </motion.div>
       </section>
     </div>
   );

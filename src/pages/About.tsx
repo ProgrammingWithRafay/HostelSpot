@@ -1,6 +1,7 @@
 import { Target, Heart, Shield, Zap } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/figma/ui/avatar";
 import { Separator } from "../components/figma/ui/separator";
+import { motion } from "motion/react";
 
 const TEAM = [
   { name: "Rafay", title: "Founder & FAST University Student", image: "/founder.jpg" },
@@ -59,14 +60,21 @@ export default function About() {
           <h2 className="text-3xl font-bold">Our Values</h2>
         </div>
         <div className="grid sm:grid-cols-2 gap-6">
-          {VALUES.map(({ icon: Icon, title, desc }) => (
-            <div key={title} className="bg-card border border-border rounded-2xl p-6">
+          {VALUES.map(({ icon: Icon, title, desc }, i) => (
+            <motion.div 
+              key={title} 
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
+              className="bg-card border border-border rounded-2xl p-6"
+            >
               <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
                 <Icon size={20} className="text-primary" />
               </div>
               <h3 className="font-bold text-lg mb-2">{title}</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
-            </div>
+            </motion.div>
           ))}
         </div>
       </section>
@@ -80,15 +88,22 @@ export default function About() {
           <h2 className="text-3xl font-bold">Meet The Founder</h2>
         </div>
         <div className="flex justify-center">
-          {TEAM.map(({ name, title, image }) => (
-            <div key={name} className="text-center">
+          {TEAM.map(({ name, title, image }, i) => (
+            <motion.div 
+              key={name} 
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
+              className="text-center"
+            >
               <Avatar className="w-32 h-32 mx-auto mb-4 border-4 border-primary/10 shadow-lg">
                 <AvatarImage src={image} />
                 <AvatarFallback>{name.slice(0, 2)}</AvatarFallback>
               </Avatar>
               <p className="font-semibold text-sm">{name}</p>
               <p className="text-xs text-muted-foreground mt-0.5">{title}</p>
-            </div>
+            </motion.div>
           ))}
         </div>
       </section>

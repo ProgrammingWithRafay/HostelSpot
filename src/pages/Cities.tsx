@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useHostels } from "../hooks/useHostels";
 import { useMemo } from "react";
 import { CITIES } from "../utils/constants";
+import { motion } from "motion/react";
 
 export default function Cities() {
   const { allData, loading } = useHostels();
@@ -68,36 +69,51 @@ export default function Cities() {
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
           )}
-          {!loading && cities.map((city) => {
+          {!loading && cities.map((city, i) => {
             const isActive = city.active;
             
-            return isActive ? (
-              <Link
+            return (
+              <motion.div
                 key={city.name}
-                to={`/hostels?search=${city.name}`}
-                className="group flex flex-col items-center justify-center text-center p-6 rounded-2xl bg-primary text-primary-foreground border border-primary hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                className="h-full"
               >
-                <MapPin className="mb-3 opacity-90" size={24} />
-                <h3 className="font-bold text-lg mb-1">{city.name}</h3>
-                <p className="text-sm font-medium opacity-80">{city.count} hostels</p>
-              </Link>
-            ) : (
-              <div
-                key={city.name}
-                className="flex flex-col items-center justify-center text-center p-6 rounded-2xl bg-card border border-border text-muted-foreground opacity-60 cursor-not-allowed"
-              >
-                <MapPin className="mb-3 opacity-50" size={24} />
-                <h3 className="font-bold text-lg mb-1">{city.name}</h3>
-                <p className="text-sm font-medium opacity-60">Coming soon</p>
-              </div>
+                {isActive ? (
+                  <Link
+                    to={`/hostels?search=${city.name}`}
+                    className="h-full group flex flex-col items-center justify-center text-center p-6 rounded-2xl bg-primary text-primary-foreground border border-primary hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1"
+                  >
+                    <MapPin className="mb-3 opacity-90" size={24} />
+                    <h3 className="font-bold text-lg mb-1">{city.name}</h3>
+                    <p className="text-sm font-medium opacity-80">{city.count} hostels</p>
+                  </Link>
+                ) : (
+                  <div
+                    className="h-full flex flex-col items-center justify-center text-center p-6 rounded-2xl bg-card border border-border text-muted-foreground opacity-60 cursor-not-allowed"
+                  >
+                    <MapPin className="mb-3 opacity-50" size={24} />
+                    <h3 className="font-bold text-lg mb-1">{city.name}</h3>
+                    <p className="text-sm font-medium opacity-60">Coming soon</p>
+                  </div>
+                )}
+              </motion.div>
             );
           })}
 
-          <div className="flex flex-col items-center justify-center text-center p-6 rounded-2xl bg-card border border-dashed border-border text-muted-foreground opacity-70">
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.5, delay: cities.length * 0.1 }}
+            className="flex flex-col items-center justify-center text-center p-6 rounded-2xl bg-card border border-dashed border-border text-muted-foreground opacity-70"
+          >
             <MapPin className="mb-3 opacity-50" size={24} />
             <h3 className="font-bold text-lg mb-1">More Cities</h3>
             <p className="text-sm font-medium opacity-80">Coming soon</p>
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>
