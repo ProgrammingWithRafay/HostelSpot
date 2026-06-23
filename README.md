@@ -1,5 +1,7 @@
 # HostelSpot
 
+**Live Demo:** [https://hostel-spot.vercel.app](https://hostel-spot.vercel.app)
+
 Find your hostel before you arrive.
 
 A full-stack student hostel booking platform for university students. Browse, compare, and book verified hostels with a professional UI, real-time updates, and a comprehensive management system.
