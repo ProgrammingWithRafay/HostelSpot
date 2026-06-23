@@ -6,23 +6,25 @@ A full-stack student hostel booking platform for university students. Browse, co
 
 ## Features
 
-* **Student Dashboard**: Live booking status, referral tracking, and profile management
-* **Owner Dashboard**: Manage bookings, room availability, and hostel details
-* **Admin Panel**: Full control over users, hostels, and verification
-* **Smart Filtering**: URL-persistent filters (useSearchParams) for price, amenities, and room types
-* **Interactive Maps**: OpenStreetMap integration via Leaflet for exploring hostel locations
-* **Auth System**: Secure Supabase Auth with Forgot/Reset Password flow
-* **Realtime**: Live booking status updates via Supabase Realtime
-* **Referral System**: Student referral program with reward tracking
-* **Premium UI**: Modern, responsive design with smooth animations, skeleton loaders, and curated aesthetics
-* **Demo Mode**: Fully functional mock-data mode for offline/credential-free testing
+* **Student Dashboard**: Live booking status, referral tracking, and profile management.
+* **Owner Dashboard**: Manage bookings, room availability, and hostel details.
+* **Admin Panel**: Full control over users, hostels, contact requests, and verification.
+* **Contact Support System**: Integrated contact requests with automated email replies to users via Supabase Edge Functions.
+* **Smart Filtering**: URL-persistent filters (useSearchParams) for price, amenities, and room types.
+* **Interactive Maps**: OpenStreetMap integration via Leaflet for exploring hostel locations.
+* **Auth System**: Secure Supabase Auth.
+* **Realtime**: Live booking status updates via Supabase Realtime.
+* **Referral System**: Student referral program with reward tracking.
+* **Premium UI**: Modern, responsive design with smooth animations, skeleton loaders, and curated aesthetics.
+* **Demo Mode**: Fully functional mock-data mode for offline/credential-free testing.
 
 ## Tech Stack
 
 * **Frontend:** React 18, TypeScript, Tailwind CSS v4, Vite
 * **State Management:** React Hooks, Supabase Auth Context
 * **Routing:** React Router DOM v6 (Protected and Role-based routes)
-* **Backend:** Supabase (PostgreSQL, Auth, Storage)
+* **Backend:** Supabase (PostgreSQL, Auth, Storage, Edge Functions)
+* **Email API:** Brevo (Sendinblue) integrated via Deno Edge Functions
 * **Maps:** Leaflet, React Leaflet (OpenStreetMap)
 * **UI Components:** Radix UI primitives, Lucide React, Sonner (Toasts)
 
@@ -52,14 +54,22 @@ VITE_SUPABASE_ANON_KEY=your_anon_key
 ## Supabase Setup
 
 ### 1. SQL Schema
-Run `supabase/migrations/001_initial_schema.sql` in the Supabase SQL Editor. This sets up:
-* Tables: `hostels`, `rooms`, `profiles`, `bookings`, `reviews`, `referrals`
-* Row Level Security (RLS) policies
-* Database triggers for auto-updating counts and ratings
+Run `supabase/migrations/001_initial_schema.sql` in the Supabase SQL Editor. This single file sets up:
+* Tables: `hostels`, `rooms`, `profiles`, `bookings`, `reviews`, `referrals`, `contact_requests`
+* Row Level Security (RLS) policies for all tables
+* Database triggers for auto-updating counts, ratings, and profile creation
 * Strict Database CHECK constraints for data validation
 
 ### 2. Storage
 Create a public bucket named `hostel-images` for hostel galleries in the Supabase Storage dashboard.
+
+### 3. Edge Functions (Email Replies)
+To enable the Admin dashboard to send email replies to contact requests, deploy the edge function:
+```bash
+npx supabase secrets set BREVO_API_KEY="your_brevo_api_key"
+npx supabase secrets set BREVO_SENDER_EMAIL="your_verified_sender_email@example.com"
+npx supabase functions deploy send-reply-email
+```
 
 ## Project Structure
 
@@ -74,8 +84,8 @@ src/
 └── data/                 # Mock data for Demo Mode
 
 supabase/
-├── migrations/           # Database schema and RLS policies
-└── seed.sql              # Initial hostel and room records
+├── migrations/           # 001_initial_schema.sql (Consolidated Database schema and RLS policies)
+└── functions/            # Deno Edge functions (send-reply-email)
 ```
 
 ## User Roles and Permissions
@@ -93,7 +103,7 @@ HostelSpot supports three distinct user roles:
 
 ### 3. ADMIN
 * Full access to the Admin Panel.
-* Can verify owners, manage all hostels, and update roles.
+* Can verify owners, manage all hostels, update roles, and reply to contact requests via email.
 
 #### Promoting a User (SQL)
 Run this in the Supabase SQL Editor to manually assign elevated roles:
@@ -105,4 +115,4 @@ update public.profiles set role = 'HOSTEL_OWNER', is_verified = true where email
 ## Deployment
 
 * **Frontend:** Optimized for Vercel, Netlify, or any static hosting provider.
-* **Backend:** Managed by Supabase.
+* **Backend:** Managed by Supabase (Postgres, Auth, Storage, Edge Functions).
