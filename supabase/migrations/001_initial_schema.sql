@@ -56,6 +56,7 @@ create table if not exists profiles (
   city_of_origin text,
   role text check (role in ('STUDENT', 'ADMIN', 'HOSTEL_OWNER')) default 'STUDENT',
   hostel_id uuid references hostels(id) on delete set null,
+  is_verified boolean default false,
   is_suspended boolean default false,
   created_at timestamp with time zone default now()
 );
@@ -166,6 +167,7 @@ create policy "Hostel owners can manage their hostel images" on hostel_images fo
 create policy "Users can read own profile" on profiles for select using (auth.uid() = id);
 create policy "Users can update own profile" on profiles for update using (auth.uid() = id);
 create policy "Admins can read all profiles" on profiles for select using (is_admin());
+create policy "Admins can update all profiles" on profiles for update using (is_admin());
 create policy "Admins can delete profiles" on profiles for delete using (is_admin());
 
 -- BOOKINGS POLICIES
@@ -227,7 +229,7 @@ begin
     new.id, 
     new.email, 
     _role,
-    new.raw_user_meta_data->>'full_name',
+    coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name'),
     new.raw_user_meta_data->>'phone',
     new.raw_user_meta_data->>'city_of_origin'
   )
@@ -302,3 +304,26 @@ drop trigger if exists on_review_created on reviews;
 create trigger on_review_created
   after insert on reviews
   for each row execute function handle_review_created();
+
+-- ============================================================
+-- CONTACT REQUESTS
+-- ============================================================
+create table if not exists contact_requests (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  email text not null,
+  subject text not null,
+  message text not null,
+  user_id uuid references auth.users(id) on delete set null,
+  admin_reply text,
+  status text check (status in ('PENDING', 'REPLIED', 'CLOSED')) default 'PENDING',
+  created_at timestamp with time zone default now(),
+  replied_at timestamp with time zone
+);
+
+alter table contact_requests enable row level security;
+
+-- POLICIES
+create policy "Admins can manage contact requests" on contact_requests for all using (is_admin());
+create policy "Authenticated students can view their own requests" on contact_requests for select using (auth.uid() = user_id);
+create policy "Anyone can insert a contact request" on contact_requests for insert with check (true);

@@ -26,6 +26,10 @@ function AdminRoute({ children }: AdminRouteProps) {
     return <Navigate to="/login" replace />;
   }
 
+  if (profile?.is_suspended) {
+    return <Navigate to="/login" replace />;
+  }
+
   if (profile && profile.role !== 'ADMIN' && !isDemoMode) {
     return <Navigate to="/" replace />;
   }

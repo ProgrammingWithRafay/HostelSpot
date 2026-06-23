@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useBooking } from '../hooks/useBooking';
@@ -10,6 +10,8 @@ import { Badge } from '../components/figma/ui/badge';
 import { CheckCircle2, Clock, Copy, Home, MessageCircle, ArrowUpRight, Building2, XCircle } from 'lucide-react';
 import MessagesPanel from '../components/MessagesPanel';
 import ConfirmModal from '../components/ConfirmModal';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import type { ContactRequest } from '../types';
 
 const STATUS_CONFIG: Record<string, { label: string; className: string; Icon: any }> = {
   PENDING: { label: "Pending", className: "bg-amber-100 text-amber-700", Icon: Clock },
@@ -24,6 +26,19 @@ export default function Dashboard() {
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [bookingToCancel, setBookingToCancel] = useState<string | null>(null);
+  const [contactRequests, setContactRequests] = useState<ContactRequest[]>([]);
+
+  useEffect(() => {
+    if (profile?.id && isSupabaseConfigured()) {
+      supabase.from('contact_requests')
+        .select('*')
+        .eq('user_id', profile.id)
+        .order('created_at', { ascending: false })
+        .then(({ data }) => {
+          if (data) setContactRequests(data);
+        });
+    }
+  }, [profile?.id]);
 
   const handleCancelClick = (id: string) => {
     setBookingToCancel(id);
@@ -168,6 +183,39 @@ export default function Dashboard() {
               <h2 className="text-xl font-bold text-slate-900 mb-6">Your Messages</h2>
               <MessagesPanel type="student" profileId={profile?.id || ''} />
             </div>
+
+            {contactRequests.length > 0 && (
+              <div className="mt-8">
+                <h2 className="text-xl font-bold text-slate-900 mb-6">Support Tickets</h2>
+                <div className="flex flex-col gap-4">
+                  {contactRequests.map(req => (
+                    <div key={req.id} className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-bold text-slate-900">{req.subject}</h3>
+                            <Badge variant={req.status === 'PENDING' ? 'secondary' : 'default'} className={req.status === 'PENDING' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}>
+                              {req.status}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-slate-500">{new Date(req.created_at).toLocaleString()}</p>
+                        </div>
+                      </div>
+                      <div className="bg-slate-50 p-4 rounded-xl text-sm text-slate-700 mb-4 border border-slate-100">
+                        <span className="font-semibold block mb-1">Your Message:</span>
+                        {req.message}
+                      </div>
+                      {req.status === 'REPLIED' && req.admin_reply && (
+                        <div className="bg-primary/5 p-4 rounded-xl text-sm border border-primary/10">
+                          <span className="font-bold text-primary block mb-1">Support Reply:</span>
+                          <p className="text-slate-800">{req.admin_reply}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Sidebar */}

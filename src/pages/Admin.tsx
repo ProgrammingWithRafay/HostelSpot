@@ -1,6 +1,6 @@
 import { toast } from 'sonner';
 import { useState, useEffect } from "react";
-import { Users as UsersIcon, Building2, BookOpen, TrendingUp, CheckCircle2, XCircle, Search, UserCog, X, Trash2, Ban, RotateCcw } from "lucide-react";
+import { Users as UsersIcon, Building2, BookOpen, TrendingUp, CheckCircle2, XCircle, Search, UserCog, X, Trash2, Ban, RotateCcw, MessageSquare, Send } from "lucide-react";
 import {
   AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
@@ -10,7 +10,7 @@ import { Input } from "../components/figma/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../components/figma/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/figma/ui/table";
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
-import type { Hostel, Booking, Profile } from "../types";
+import type { Hostel, Booking, Profile, ContactRequest } from "../types";
 import ConfirmModal from "../components/ConfirmModal";
 
 export default function AdminDashboard() {
@@ -19,6 +19,8 @@ export default function AdminDashboard() {
   const [properties, setProperties] = useState<Hostel[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [contactRequests, setContactRequests] = useState<ContactRequest[]>([]);
+  const [replyText, setReplyText] = useState<Record<string, string>>({});
   const [assigningHostelId, setAssigningHostelId] = useState<Record<string, string>>({});
   const [modalConfig, setModalConfig] = useState<{ open: boolean; title: string; description: string; onConfirm: () => void; confirmText?: string; variant?: 'danger' | 'primary' }>({ open: false, title: '', description: '', onConfirm: () => {} });
 
@@ -33,15 +35,17 @@ export default function AdminDashboard() {
         return;
       }
 
-      const [usersRes, propsRes, bookingsRes] = await Promise.all([
+      const [usersRes, propsRes, bookingsRes, requestsRes] = await Promise.all([
         supabase.from('profiles').select('*').order('created_at', { ascending: false }),
         supabase.from('hostels').select('*').order('created_at', { ascending: false }),
-        supabase.from('bookings').select('*, room:rooms(*)')
+        supabase.from('bookings').select('*, room:rooms(*)'),
+        supabase.from('contact_requests').select('*').order('created_at', { ascending: false })
       ]);
 
       if (usersRes.data) setUsers(usersRes.data);
       if (propsRes.data) setProperties(propsRes.data);
       if (bookingsRes.data) setBookings(bookingsRes.data);
+      if (requestsRes.data) setContactRequests(requestsRes.data);
 
       setLoading(false);
     }
@@ -57,6 +61,8 @@ export default function AdminDashboard() {
 
     if (!error) {
       setUsers(prev => prev.map(u => u.id === id ? { ...u, is_verified: isVerifying } : u));
+    } else {
+      toast.error(error.message);
     }
   };
 
@@ -68,6 +74,8 @@ export default function AdminDashboard() {
 
     if (!error) {
       setProperties(prev => prev.map(h => h.id === id ? { ...h, verified: !currentVerified } : h));
+    } else {
+      toast.error(error.message);
     }
   };
 
@@ -117,6 +125,34 @@ export default function AdminDashboard() {
         setModalConfig(prev => ({ ...prev, open: false }));
       }
     );
+  };
+
+  const handleReplyContactRequest = async (request: ContactRequest) => {
+    const reply = replyText[request.id];
+    if (!reply || !reply.trim()) return;
+
+    const { error } = await supabase
+      .from('contact_requests')
+      .update({ admin_reply: reply.trim(), status: 'REPLIED', replied_at: new Date().toISOString() })
+      .eq('id', request.id);
+
+    if (error) {
+      toast.error("Failed to update request");
+      return;
+    }
+
+    setContactRequests(prev => prev.map(r => r.id === request.id ? { ...r, admin_reply: reply.trim(), status: 'REPLIED', replied_at: new Date().toISOString() } : r));
+    
+    // Trigger edge function to send email
+    const { error: fnError } = await supabase.functions.invoke('send-reply-email', {
+      body: { name: request.name, email: request.email, subject: request.subject, message: request.message, admin_reply: reply.trim() }
+    });
+
+    if (fnError) {
+      toast.error(`Replied in dashboard, but email failed: ${fnError.message}`);
+    } else {
+      toast.success("Reply sent & emailed!");
+    }
   };
 
   const toggleSuspendUser = async (id: string, currentlySuspended: boolean) => {
@@ -201,6 +237,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="owners" className="gap-2"><UserCog size={15} />Owners</TabsTrigger>
             <TabsTrigger value="properties" className="gap-2"><Building2 size={15} />Properties</TabsTrigger>
             <TabsTrigger value="bookings" className="gap-2"><BookOpen size={15} />Bookings</TabsTrigger>
+            <TabsTrigger value="support" className="gap-2"><MessageSquare size={15} />Support</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
@@ -301,7 +338,7 @@ export default function AdminDashboard() {
                     <TableRow key={u.id} className={u.is_suspended ? "opacity-50 bg-muted/20" : ""}>
                       <TableCell>
                         <div>
-                          <p className="font-semibold text-sm">{u.full_name || "Unknown User"}</p>
+                          <p className="font-semibold text-sm">{u.full_name || (u.email ? u.email.split('@')[0] : "Unknown User")}</p>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -360,7 +397,7 @@ export default function AdminDashboard() {
                       <TableRow key={u.id} className={u.is_suspended ? "opacity-50 bg-muted/20" : ""}>
                         <TableCell>
                           <div>
-                            <p className="font-semibold text-sm">{u.full_name || "Unknown Owner"}</p>
+                            <p className="font-semibold text-sm">{u.full_name || (u.email ? u.email.split('@')[0] : "Unknown Owner")}</p>
                             {u.is_suspended && <span className="text-xs font-bold text-destructive">SUSPENDED</span>}
                           </div>
                         </TableCell>
@@ -522,6 +559,60 @@ export default function AdminDashboard() {
                     <p className="text-xs text-muted-foreground">{name}</p>
                   </div>
                 ))}
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Support */}
+          <TabsContent value="support">
+            <div className="bg-card border border-border rounded-2xl overflow-hidden">
+              <div className="p-4 border-b border-border">
+                <h2 className="font-bold text-lg">Contact Requests</h2>
+                <p className="text-sm text-muted-foreground">Manage student inquiries and contact requests.</p>
+              </div>
+              <div className="p-4 flex flex-col gap-4">
+                {contactRequests.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">No contact requests found</div>
+                )}
+                {contactRequests.map((req) => {
+                  const isEmailed = !req.user_id || users.find(u => u.id === req.user_id)?.is_suspended;
+                  return (
+                  <div key={req.id} className="border border-border rounded-xl p-4">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-bold">{req.subject}</h3>
+                          <Badge variant={req.status === 'PENDING' ? 'default' : 'secondary'} className={req.status === 'PENDING' ? 'bg-amber-500 hover:bg-amber-600' : ''}>
+                            {req.status}
+                          </Badge>
+                        </div>
+                        <p className="text-sm font-medium">{req.name} <span className="text-muted-foreground font-normal">({req.email})</span></p>
+                        <p className="text-xs text-muted-foreground">{new Date(req.created_at).toLocaleString()}</p>
+                      </div>
+                    </div>
+                    <div className="bg-muted/30 p-3 rounded-lg mb-4 text-sm">
+                      {req.message}
+                    </div>
+                    
+                    {req.status === 'REPLIED' ? (
+                      <div className="bg-primary/5 border border-primary/20 p-3 rounded-lg text-sm">
+                        <p className="font-bold text-primary mb-1 text-xs uppercase tracking-wider">Your Reply ({new Date(req.replied_at || '').toLocaleDateString()})</p>
+                        <p>{req.admin_reply}</p>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Input 
+                          placeholder={isEmailed ? "Type your reply... this will be emailed to the user." : "Type your reply... this will appear in their dashboard."}
+                          value={replyText[req.id] || ''}
+                          onChange={e => setReplyText(prev => ({ ...prev, [req.id]: e.target.value }))}
+                        />
+                        <Button onClick={() => handleReplyContactRequest(req)} disabled={!replyText[req.id]}>
+                          <Send size={16} className="mr-2" /> Reply
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )})}
               </div>
             </div>
           </TabsContent>

@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { Mail, Phone, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "../components/figma/ui/button";
 import { Input } from "../components/figma/ui/input";
 import { Label } from "../components/figma/ui/label";
 import { Textarea } from "../components/figma/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/figma/ui/select";
 import { Alert, AlertDescription } from "../components/figma/ui/alert";
+import { supabase, isSupabaseConfigured } from "../lib/supabase";
+import { useAuth } from "../hooks/useAuth";
 
 const CONTACT_INFO = [
   { icon: Mail, label: "Email", value: "rafayalishah74@gmail.com", sub: "We reply within 24 hours" },
@@ -13,12 +16,39 @@ const CONTACT_INFO = [
 ];
 
 export default function Contact() {
+  const { profile, user } = useAuth();
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const needsEmail = !profile || profile.is_suspended;
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    if (!isSupabaseConfigured()) {
+      toast.error("Database connection not configured");
+      return;
+    }
+
+    setLoading(true);
+    const finalEmail = needsEmail ? form.email : (profile?.email || user?.email);
+    const finalName = form.name || profile?.full_name || 'User';
+
+    const { error } = await supabase.from('contact_requests').insert({
+      name: finalName,
+      email: finalEmail,
+      subject: form.subject || 'general',
+      message: form.message,
+      user_id: profile?.id || null
+    });
+
+    setLoading(false);
+
+    if (error) {
+      toast.error("Failed to send message: " + error.message);
+    } else {
+      setSubmitted(true);
+    }
   };
 
   return (
@@ -42,20 +72,22 @@ export default function Contact() {
               <Alert className="border-emerald-200 bg-emerald-50">
                 <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                 <AlertDescription className="text-emerald-700">
-                  Thanks for reaching out, {form.name}! We&apos;ll get back to you at {form.email} within 24 hours.
+                  Thanks for reaching out, {form.name || profile?.full_name}! We'll get back to you {needsEmail ? `at ${form.email}` : "in your dashboard"} within 24 hours.
                 </AlertDescription>
               </Alert>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div className={`grid ${needsEmail ? 'sm:grid-cols-2' : ''} gap-4`}>
                   <div className="space-y-1.5">
                     <Label htmlFor="name">Full Name</Label>
-                    <Input id="name" placeholder="Ahmad Raza" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+                    <Input id="name" placeholder="Ahmad Raza" value={profile?.full_name || form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required disabled={!!profile?.full_name} />
                   </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" placeholder="you@email.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
-                  </div>
+                  {needsEmail && (
+                    <div className="space-y-1.5">
+                      <Label htmlFor="email">Email</Label>
+                      <Input id="email" type="email" placeholder="you@email.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-1.5">
@@ -65,17 +97,25 @@ export default function Contact() {
                       <SelectValue placeholder="Select a topic" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="booking">Booking Help</SelectItem>
-                      <SelectItem value="listing">List My Hostel</SelectItem>
-                      <SelectItem value="report">Report an Issue</SelectItem>
+                      <SelectItem value="booking_query">Booking Queries & Cancellations</SelectItem>
+                      <SelectItem value="suspension_appeal">Account Suspension Appeal</SelectItem>
+                      <SelectItem value="owner_verification">Hostel Owner Verification</SelectItem>
+                      <SelectItem value="listing">List My Hostel / Add Property</SelectItem>
+                      <SelectItem value="technical_issue">Report a Technical Bug</SelectItem>
+                      <SelectItem value="report">Report a User or Property</SelectItem>
                       <SelectItem value="general">General Enquiry</SelectItem>
-                      <SelectItem value="partnership">Partnership</SelectItem>
+                      <SelectItem value="partnership">Partnerships & Business</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="message">Message</Label>
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="message">Message</Label>
+                    <span className={`text-xs ${form.message.length >= 100 ? 'text-destructive font-semibold' : 'text-muted-foreground'}`}>
+                      {form.message.length}/100
+                    </span>
+                  </div>
                   <Textarea
                     id="message"
                     rows={5}
@@ -83,10 +123,13 @@ export default function Contact() {
                     value={form.message}
                     onChange={(e) => setForm({ ...form, message: e.target.value })}
                     required
+                    maxLength={100}
                   />
                 </div>
 
-                <Button type="submit" className="w-full rounded-xl py-5">Send Message</Button>
+                <Button type="submit" className="w-full rounded-xl py-5" disabled={loading}>
+                  {loading ? "Sending..." : "Send Message"}
+                </Button>
               </form>
             )}
           </div>

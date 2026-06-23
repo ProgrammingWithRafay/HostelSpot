@@ -7,7 +7,7 @@ interface ProtectedRouteProps {
 }
 
 function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { user, loading, isDemoMode } = useAuth();
+  const { user, profile, loading, isDemoMode } = useAuth();
 
   if (loading) {
     return (
@@ -23,6 +23,10 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!user && !isDemoMode) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (profile?.is_suspended) {
     return <Navigate to="/login" replace />;
   }
 

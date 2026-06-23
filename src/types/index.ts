@@ -141,3 +141,16 @@ export interface Message {
   hostel?: Hostel;
   sender?: Profile;
 }
+
+export interface ContactRequest {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  user_id: string | null;
+  admin_reply: string | null;
+  status: 'PENDING' | 'REPLIED' | 'CLOSED';
+  created_at: string;
+  replied_at: string | null;
+}

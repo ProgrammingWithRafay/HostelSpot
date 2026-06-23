@@ -219,12 +219,12 @@ export default function Home() {
             {/* Search bar */}
             <form onSubmit={handleSearch} className="max-w-2xl mx-auto bg-card border border-border rounded-2xl p-2.5 shadow-xl text-left">
               <div className="flex flex-col sm:flex-row gap-2">
-                <div className="flex-1 flex items-center gap-2 px-3">
+                <div className="flex-1 flex items-center gap-2 px-3 min-w-0">
                   <MapPin size={16} className="text-muted-foreground shrink-0" />
                   <select
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
-                    className="flex-1 py-2 text-sm bg-transparent outline-none text-foreground"
+                    className="flex-1 py-2 text-sm bg-transparent outline-none text-foreground min-w-0"
                   >
                     <option value="">Select City</option>
                     {["Faisalabad", "Lahore", "Islamabad"].map((c) => (
@@ -232,13 +232,13 @@ export default function Home() {
                     ))}
                   </select>
                 </div>
-                <div className="hidden sm:block w-px bg-border self-stretch my-1" />
-                <div className="flex-1 flex items-center gap-2 px-3">
+                <div className="hidden sm:block w-px bg-border self-stretch my-1 shrink-0" />
+                <div className="flex-1 flex items-center gap-2 px-3 min-w-0">
                   <Building2 size={16} className="text-muted-foreground shrink-0" />
                   <select
                     value={university}
                     onChange={(e) => setUniversity(e.target.value)}
-                    className="flex-1 py-2 text-sm bg-transparent outline-none text-foreground disabled:opacity-50"
+                    className="flex-1 py-2 text-sm bg-transparent outline-none text-foreground disabled:opacity-50 min-w-0"
                     disabled={!location}
                   >
                     <option value="">{location ? "Select University" : "Select City First"}</option>

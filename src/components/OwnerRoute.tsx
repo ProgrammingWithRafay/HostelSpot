@@ -24,6 +24,10 @@ function OwnerRoute({ children }: OwnerRouteProps) {
     return <Navigate to="/login" replace />;
   }
 
+  if (profile?.is_suspended) {
+    return <Navigate to="/login" replace />;
+  }
+
   if (profile && profile.role !== 'HOSTEL_OWNER') {
     return <Navigate to="/" replace />;
   }
