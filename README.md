@@ -1,6 +1,6 @@
 # HostelSpot
 
-**Live Demo:** [https://hostel-spot.vercel.app](https://hostel-spot.vercel.app)
+**Live Demo:** [https://hostel-spot.vercel.app/](https://hostel-spot.vercel.app/)
 
 Find your hostel before you arrive.
 
