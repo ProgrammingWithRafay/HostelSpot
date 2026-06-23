@@ -29,7 +29,6 @@ const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('./pages/TermsOfService'));
 import { Toaster } from 'sonner';
 import './index.css';
-import { Agentation } from 'agentation';
 
 
 function App() {
@@ -85,7 +84,6 @@ function App() {
           </main>
           <Footer />
           <Toaster richColors position="top-center" expand={false} />
-          <Agentation endpoint="http://localhost:4747" />
         </div>
       </AuthProvider>
     </BrowserRouter>
