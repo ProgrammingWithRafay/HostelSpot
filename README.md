@@ -16,6 +16,7 @@ A full-stack student hostel booking platform for university students. Browse, co
 * **Realtime**: Live booking status updates via Supabase Realtime.
 * **Referral System**: Student referral program with reward tracking.
 * **Premium UI**: Modern, responsive design with smooth animations, skeleton loaders, and curated aesthetics.
+* **Performance Optimized**: Lazy loading and code splitting implemented for lightning-fast initial page loads.
 * **Demo Mode**: Fully functional mock-data mode for offline/credential-free testing.
 
 ## Tech Stack
@@ -114,5 +115,13 @@ update public.profiles set role = 'HOSTEL_OWNER', is_verified = true where email
 
 ## Deployment
 
+### Vercel (Recommended)
+This project is configured for seamless deployment on Vercel:
+1. Connect your GitHub repository to Vercel.
+2. Vercel will automatically detect Vite and configure the build settings.
+3. Add your `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to the Vercel Environment Variables section.
+4. **Note**: A `vercel.json` file is included to handle client-side routing fallbacks automatically.
+
+### Other Providers
 * **Frontend:** Optimized for Vercel, Netlify, or any static hosting provider.
 * **Backend:** Managed by Supabase (Postgres, Auth, Storage, Edge Functions).
