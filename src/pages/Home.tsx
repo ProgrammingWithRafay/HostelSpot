@@ -179,7 +179,7 @@ export default function Home() {
         if (realReviews && realReviews.length > 0) {
           const mappedReviews = realReviews.map((r) => {
             const profArray = r.profile as unknown as { full_name: string; university: string }[];
-            const profile = Array.isArray(profArray) ? profArray[0] : (profArray as any);
+            const profile = Array.isArray(profArray) ? profArray[0] : (profArray as unknown as { full_name: string; university: string });
             return {
               name: profile?.full_name || "Anonymous Student",
               university: profile?.university || "Student",
