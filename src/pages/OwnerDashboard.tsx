@@ -286,7 +286,7 @@ export default function OwnerDashboard() {
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                       <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                       <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `${v/1000}k`} />
-                      <Tooltip formatter={(v: number) => [`PKR ${v.toLocaleString()}`, "Revenue"]} />
+                      <Tooltip formatter={(v) => [`PKR ${Number(v || 0).toLocaleString()}`, "Revenue"]} />
                       <Line type="monotone" dataKey="revenue" stroke="#4F46E5" strokeWidth={2.5} dot={true} />
                     </LineChart>
                   </ResponsiveContainer>
@@ -302,7 +302,7 @@ export default function OwnerDashboard() {
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                       <XAxis dataKey="room" tick={{ fontSize: 12 }} />
                       <YAxis tick={{ fontSize: 12 }} domain={[0, 100]} />
-                      <Tooltip formatter={(v: number) => [`${v}%`, "Occupancy"]} />
+                      <Tooltip formatter={(v) => [`${v}%`, "Occupancy"]} />
                       <Bar dataKey="occupancy" fill="#4F46E5" radius={[6, 6, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>

@@ -134,7 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         city_of_origin: metadata.city_of_origin,
         role: (metadata.role || 'STUDENT') as 'STUDENT' | 'ADMIN' | 'HOSTEL_OWNER',
         is_verified: metadata.role === 'HOSTEL_OWNER' ? false : true,
-        hostel_id: (metadata as { hostel_id?: string }).hostel_id ?? null,
+        hostel_id: (metadata as { hostel_id?: string }).hostel_id,
         created_at: new Date().toISOString(),
       };
       setUser(demoUser);
