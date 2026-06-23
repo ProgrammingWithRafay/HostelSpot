@@ -31,7 +31,15 @@ const HOW_IT_WORKS = [
   },
 ];
 
-const FALLBACK_TESTIMONIALS: any[] = [];
+interface Testimonial {
+  name: string;
+  university: string;
+  rating: number;
+  text: string;
+  avatar: string;
+}
+
+const FALLBACK_TESTIMONIALS: Testimonial[] = [];
 
 function AnimatedNumber({ value }: { value: number }) {
   const [current, setCurrent] = useState(0);
@@ -125,7 +133,7 @@ export default function Home() {
   const { hostels, loading: hostelsLoading } = useHostels({ sort: "rating" });
   
   const [stats, setStats] = useState({ hostels: 0, reviews: 0, universities: 0 });
-  const [reviews, setReviews] = useState<any[]>(FALLBACK_TESTIMONIALS);
+  const [reviews, setReviews] = useState<Testimonial[]>(FALLBACK_TESTIMONIALS);
 
   useEffect(() => {
     async function fetchRealData() {
@@ -169,13 +177,17 @@ export default function Home() {
           .limit(3);
 
         if (realReviews && realReviews.length > 0) {
-          const mappedReviews = realReviews.map((r: any) => ({
-            name: r.profile?.full_name || "Anonymous Student",
-            university: r.profile?.university || "Student",
-            rating: r.rating,
-            text: r.comment,
-            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=" + (r.profile?.full_name || "Anon"),
-          }));
+          const mappedReviews = realReviews.map((r) => {
+            const profArray = r.profile as unknown as { full_name: string; university: string }[];
+            const profile = Array.isArray(profArray) ? profArray[0] : (profArray as any);
+            return {
+              name: profile?.full_name || "Anonymous Student",
+              university: profile?.university || "Student",
+              rating: r.rating as number,
+              text: r.comment as string,
+              avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=" + (profile?.full_name || "Anon"),
+            };
+          });
           
           setReviews(mappedReviews);
         } else {

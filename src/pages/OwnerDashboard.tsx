@@ -18,7 +18,7 @@ import ImageGalleryEditor from "../components/Owner/ImageGalleryEditor";
 import RoomManager from "../components/Owner/RoomManager";
 import MessagesPanel from "../components/MessagesPanel";
 
-const STATUS_CONFIG: Record<string, { className: string; Icon: any }> = {
+const STATUS_CONFIG: Record<string, { className: string; Icon: React.ElementType }> = {
   PENDING: { className: "bg-amber-100 text-amber-700", Icon: Clock },
   CONFIRMED: { className: "bg-emerald-100 text-emerald-700", Icon: CheckCircle2 },
   CANCELLED: { className: "bg-red-100 text-red-700", Icon: XCircle },
@@ -117,8 +117,8 @@ export default function OwnerDashboard() {
       // Force reload to pick up new hostel data
       window.location.reload();
       
-    } catch (err: any) {
-      toast.error("Failed to create property: " + (err.message || "Unknown error"));
+    } catch (err: unknown) {
+      toast.error("Failed to create property: " + (err instanceof Error ? err.message : "Unknown error"));
       console.error(err);
     } finally {
       setSubmittingProp(false);
@@ -286,7 +286,7 @@ export default function OwnerDashboard() {
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                       <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                       <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `${v/1000}k`} />
-                      <Tooltip formatter={(v: any) => [`PKR ${v.toLocaleString()}`, "Revenue"]} />
+                      <Tooltip formatter={(v: number) => [`PKR ${v.toLocaleString()}`, "Revenue"]} />
                       <Line type="monotone" dataKey="revenue" stroke="#4F46E5" strokeWidth={2.5} dot={true} />
                     </LineChart>
                   </ResponsiveContainer>
@@ -302,7 +302,7 @@ export default function OwnerDashboard() {
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                       <XAxis dataKey="room" tick={{ fontSize: 12 }} />
                       <YAxis tick={{ fontSize: 12 }} domain={[0, 100]} />
-                      <Tooltip formatter={(v: any) => [`${v}%`, "Occupancy"]} />
+                      <Tooltip formatter={(v: number) => [`${v}%`, "Occupancy"]} />
                       <Bar dataKey="occupancy" fill="#4F46E5" radius={[6, 6, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>

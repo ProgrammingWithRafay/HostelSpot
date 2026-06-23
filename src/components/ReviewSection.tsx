@@ -35,9 +35,10 @@ export default function ReviewSection({ hostelId }: Props) {
     if (user && profile?.role === 'STUDENT') {
       checkReviewEligibility();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hostelId, user, profile]);
 
-  const fetchReviews = async () => {
+  async function fetchReviews() {
     if (!isSupabaseConfigured()) {
       setLoading(false);
       return;
@@ -67,7 +68,7 @@ export default function ReviewSection({ hostelId }: Props) {
         profiles: Array.isArray(r.profiles) ? r.profiles[0] : r.profiles
       }));
 
-      setReviews(formattedReviews as any);
+      setReviews(formattedReviews as Review[]);
     } catch (err) {
       console.error('Error fetching reviews:', err);
     } finally {
@@ -75,7 +76,7 @@ export default function ReviewSection({ hostelId }: Props) {
     }
   };
 
-  const checkReviewEligibility = async () => {
+  async function checkReviewEligibility() {
     if (!user || !isSupabaseConfigured()) return;
 
     try {
@@ -128,8 +129,9 @@ export default function ReviewSection({ hostelId }: Props) {
       setComment('');
       setRating(5);
       fetchReviews();
-    } catch (err: any) {
-      toast.error('Failed to submit review: ' + (err.message || 'Unknown error'));
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      toast.error('Failed to submit review: ' + errorMessage);
       console.error('Submit review error:', err);
     } finally {
       setSubmitting(false);

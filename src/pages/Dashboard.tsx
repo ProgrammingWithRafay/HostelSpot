@@ -13,7 +13,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type { ContactRequest } from '../types';
 
-const STATUS_CONFIG: Record<string, { label: string; className: string; Icon: any }> = {
+const STATUS_CONFIG: Record<string, { label: string; className: string; Icon: React.ElementType }> = {
   PENDING: { label: "Pending", className: "bg-amber-100 text-amber-700", Icon: Clock },
   CONFIRMED: { label: "Confirmed", className: "bg-emerald-100 text-emerald-700", Icon: CheckCircle2 },
   CANCELLED: { label: "Cancelled", className: "bg-red-100 text-red-700", Icon: XCircle },

@@ -60,9 +60,9 @@ export default function ImageGalleryEditor({ hostelId, images: initialImages }: 
 
       if (dbError) throw dbError;
       if (data) setImages(prev => [...prev, data]);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error uploading image:', error);
-      toast.error('Failed to upload image: ' + (error?.message || 'Unknown error'));
+      toast.error('Failed to upload image: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';

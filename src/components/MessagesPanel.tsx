@@ -28,9 +28,10 @@ export default function MessagesPanel({ type, profileId, hostelId }: Props) {
 
   useEffect(() => {
     fetchMessages();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profileId, hostelId]);
 
-  const fetchMessages = async () => {
+  async function fetchMessages() {
     if (!isSupabaseConfigured()) return;
     setLoading(true);
 

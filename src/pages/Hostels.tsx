@@ -82,6 +82,7 @@ export default function Hostels() {
     if (debouncedSearch !== (searchParams.get('search') || '')) {
       updateFilter('search', debouncedSearch);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch, searchParams]);
 
   const toggleAmenity = (key: string) => {
